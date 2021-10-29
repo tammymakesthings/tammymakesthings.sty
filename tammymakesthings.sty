@@ -14,8 +14,6 @@
 \RequirePackage{ifthen}
 \RequirePackage{iftex}
 
-\LoadClass{memoir}              % Make sure the memoir class is loaded
-
 %%%%%%%%%%%%%%%%%%%%
 % Declare the conditional formatting toggles we're going to use.
 %%%%%%%%%%%%%%%%%%%%
@@ -35,6 +33,16 @@
 \togglefalse{betareader}
 \togglefalse{manuscript}
 \togglefalse{authorcopy}
+
+\DeclareOption{ebook}{\toggletrue{ebook}}
+\DeclareOption{printbook}{\toggletrue{printbook}}
+\DeclareOption{betareader}{\toggletrue{betareader}}
+\DeclareOption{manuscript}{\toggletrue{manuscript}}
+\DeclareOption{authorcopy}{\toggletrue{authorcopy}}
+
+\DeclareOption*{\PassOptionsToClass{\CurrentOption}{memoir}}
+\ProcessOptions\relax
+\RequirePackageWithOptions{memoir}              % Make sure the memoir class is loaded
 
 % Set the conditional toggles from the job name. If you don't use
 % this, you'll need to set them manually.
