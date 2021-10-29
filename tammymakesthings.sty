@@ -6,14 +6,20 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{tammymakesthings}[2021/10/22 Tammy's reusable LaTeX macros]
 
+%%%%%%%%%%%%%%%%%%%%
 % Load the first set of packages we need
+%%%%%%%%%%%%%%%%%%%%
+
 \RequirePackage{etoolbox}
 \RequirePackage{ifthen}
 \RequirePackage{iftex}
 
-\LoadClass{memoir}
+\LoadClass{memoir}              % Make sure the memoir class is loaded
 
+%%%%%%%%%%%%%%%%%%%%
 % Declare the conditional formatting toggles we're going to use.
+%%%%%%%%%%%%%%%%%%%%
+
 \newtoggle{ebook}               % Conditional toggle for ebook formats
 \newtoggle{printbook}           % Conditional toggle for Createspace
                                 % print format
@@ -24,7 +30,42 @@
 \newtoggle{authorcopy}          % Conditional toggle for author copy
                                 % print format
 
+\togglefalse{ebook}
+\togglefalse{printbook}
+\togglefalse{betareader}
+\togglefalse{manuscript}
+\togglefalse{authorcopy}
+
+% Set the conditional toggles from the job name. If you don't use
+% this, you'll need to set them manually.
+%
+% First, some magic to allow making decisions based on the
+% \jobname. This turns out to be surprisingly difficult because the
+% catcode of all the characters in \jobname is other.  See
+% https://groups.google.com/g/comp.text.tex/c/SaWowmjLzrQ for details.
+
+\def\@gobble#1{}% if necessary
+\def\thisjob#1{..\fi\begingroup
+\edef\jobA{\jobname}%
+\edef\jobB{\expandafter \expandafter \expandafter \@gobble
+\expandafter \string \csname #1\endcsname}%
+\expandafter \endgroup \ifx\jobA\jobB}
+
+\newcommand{\SetOneToggleFromJobName}[1]{ %
+  \if\thisjob{#1}\toggletrue{#1}\else\togglefalse{#1}\fi %
+} 
+\newcommand{\SetTogglesFromJobName}[0]{%
+  \SetOneToggleFromJobName{ebook} %
+  \SetOneToggleFromJobName{printbook} %
+  \SetOneToggleFromJobName{betareader} %
+  \SetOneToggleFromJobName{manuscript} %
+  \SetOneToggleFromJobName{authorcopy} %
+}
+
+%%%%%%%%%%%%%%%%%%%%
 % Include other packages we'll need
+%%%%%%%%%%%%%%%%%%%%
+
 \RequirePackage{bashful}
 \RequirePackage[xindy]{imakeidx}
 \RequirePackage[T1]{fontenc}
@@ -35,31 +76,52 @@
 \RequirePackage{fancyhdr}
 \RequirePackage{lettrine}
 \RequirePackage{tcolorbox}
+\RequirePackage{xcolor}
+\RequirePackage{supertabular}
 
+%%%%%%%%%%%%%%%%%%%%
 % Initialize the author indexes. Automatically called by the \tmtAtEndPreamble
 % hook (unless you override it).
-\newcommand{\SetupAuthorIndexes}[0]{%
-    \indexsetup{level=\chapter*,toclevel=chapter}
-    \makeindex[name=character,title=Character Index]
-    \makeindex[name=setting,title=Setting Index]
-    \makeindex[name=plot,title=Index of Plot Points]
-    \makeindex[name=revision,title=Index of Revision Notes]    
+%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\AuthorIndexTitleCharacter}{Character Index}
+\newcommand{\AuthorIndexTitleSetting}{Setting Index}
+\newcommand{\AuthorIndexTitlePlot}{Plot Point Index}
+\newcommand{\AuthorIndexTitleRevision}{Revision Note Index}
+\newcommand{\AuthorIndexTitleMaster}{Master Cross-Reference Index}
+
+\newcommand{\SetupAuthorIndexes}[0]{ %
+  \indexsetup{level=\chapter*,toclevel=chapter} %
+  \makeindex[name=character,title=\AuthorIndexTitleCharacter] %
+  \makeindex[name=setting,title=\AuthorIndexTitleSetting] %
+  \makeindex[name=plot,title=\AuthorIndexTitlePlot] %
+  \makeindex[name=revision,title=\AuthorIndexTitleRevision] %
+  \makeindex[name=master,title=\AuthorIndexTitleMaster] %
 }
 
+%%%%%%%%%%%%%%%%%%%%
 % Output the author indexes if the authorcopy toggle is set. 
-% Automatically called by the \tmtAtEndDocument hook (unless you override it).
+% Automatically called by the \tmtAtEndDocument hook (unless you
+% override it).
+%%%%%%%%%%%%%%%%%%%%
+
 \newcommand{\OutputAuthorIndexes}[0]{%
-    \iftoggle{authorcopy}{%
-        \setlength{\parskip}{0pt}
-        \printindex[character]
-        \printindex[setting]
-        \printindex[plot]
-        \printindex[revision]
-    }
-}{}
+  \iftoggle{authorcopy}{%
+    \setlength{\parskip}{0pt} %
+    \printindex[character] %
+    \printindex[setting] %
+    \printindex[plot] %
+    \printindex[revision] %
+    \printindex[master] %
+  }{}%
+}
+
+%%%%%%%%%%%%%%%%%%%%
+% Scene break macros
+%%%%%%%%%%%%%%%%%%%%
 
 % Output a fancy ornament for a scene break.
-\newcommand{\TeXscenebreak}{%
+\newcommand{\TeXscenebreak}[0]{%
   \noindent
   \begin{center}
     {\resizebox{0.5\linewidth}{1ex}
@@ -73,87 +135,209 @@
 }
 
 % Output a simpler scene break for HTML files.
-\newcommand{\HTMLscenebreak}{%
-    \par\hrule\par
-}
+\newcommand{\HTMLscenebreak}[0]{\par\hrule\par}
 
 % The \scenebreak command calls \TeXscenebreak or \HTMLscenebreak, depending on the
 % current state of the ebook toggle.
 \newcommand{\scenebreak}{\iftoggle{ebook}{\HTMLscenebreak}{\TeXscenebreak}}
 
+%%%%%%%%%%%%%%%%%%%%
 % Macros for inserting revision comments in the author copy.
+%
 % \Comment{This is an author comment}
 % \ResearchComment{I need to investigate this thing.}
 % \ReviewerComment{Jane Doe}{Jane said this.}
+%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\CommentBoxTitle}{Author Comment}
+\newcommand{\ResearchCommentBoxTitle}{Research Needed}
+\newcommand{\ReviewerCommentBoxTitle}[1]{{Reviewer Comment: {#1}}}
+
 \newcommand{\Comment}[1]{%
-    \iftoggle{authorcopy}{%
-        \begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=Revision Comment]
-            {#1}
-        \end{tcolorbox}
-    }{}
+  \iftoggle{authorcopy}{%
+    \par
+    \begin{tcolorbox}[colback=red!5!white,colframe=red!75!black,title=\CommentBoxTitle]
+      {#1}
+    \end{tcolorbox}
+    \par
+  }{}
 }
- \newcommand{\ResearchComment}[1]{%
-    \iftoggle{authorcopy}{%
-        \begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!white,title=Revision Comment]
-            #1
-        \end{tcolorbox}
-    }{}
+ 
+\newcommand{\ResearchComment}[1]{%
+  \iftoggle{authorcopy}{%
+    \par
+    \begin{tcolorbox}[colback=blue!5!white,colframe=blue!60!white,title=\ResearchCommentBoxTitle]
+      #1
+    \end{tcolorbox}
+  }{}
 }
+
 \newcommand{\ReviewerComment}[2]{%
-    \iftoggle{authorcopy}{%
-        \begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=Reviewer Comment: #1]
-             #2
-        \end{tcolorbox}
-    }{}
+  \iftoggle{authorcopy}{%
+    \par
+    \begin{tcolorbox}[colback=green!5!white,colframe=green!60!black,title=\ReviewerCommentBoxTitle{#1}]
+      #2
+    \end{tcolorbox}
+  }{}
 }
 
+%%%%%%%%%%%%%%%%%%%%
 % Set up fancy page numbering the way we want it.
+%%%%%%%%%%%%%%%%%%%%
+
 \newcommand{\SetFancyPageNumbering}{%
-    \pagestyle{fancy}
-    \fancyhf{}
-    \setlength{\headheight}{20pt}
-    \cfoot{\small --\ \thepage\ -- \normalsize}
-    \fancypagestyle{plain}{}%
-    \setlength{\footskip}{22pt}
-    \renewcommand{\headrulewidth}{0pt}
-    \renewcommand{\footrulewidth}{0pt}
+  \pagestyle{fancy}
+  \fancyhf{}
+  \setlength{\headheight}{1.58\baselineskip}
+  \cfoot{\small --\ \thepage\ -- \normalsize}
+  \fancypagestyle{plain}{}%
+  \setlength{\footskip}{1.65\baselineskip}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
 }
 
+%%%%%%%%%%%%%%%%%%%%
 % Set up the page size and print block based on the document toggles.
+%%%%%%%%%%%%%%%%%%%%
+
 \newcommand{\CreateSpacePageSetup}[0]{%
-    \setstocksize{8in}{5.25in}
-    \settrimmedsize{\stockheight}{\stockwidth}{*}
-    \setlrmarginsandblock{1.7cm}{1.7cm}{*} % Left and right margin
-    \setulmarginsandblock{1.7cm}{2cm}{*}  % Upper and lower margin
-    \setlength{\footskip}{1.65\baselineskip}
-    \checkandfixthelayout
-}
-\newcommand{\LetterPageSetup}[0]{%
-    \setstocksize{11in}{8in}
-    \settrimmedsize{\stockheight}{\stockwidth}{*}
-    \setlrmarginsandblock{1in}{1in}{*} % Left and right margin
-    \setulmarginsandblock{1in}{1in}{*}  % Upper and lower margin
-    \setlength{\footskip}{1.65\baselineskip}
-    \checkandfixthelayout
-}
-\newcommand{\EBookPageSetup}[0]{ %
-    \relax
-}
-\newcommand{\TMTSetupPage}[0]{ %
-    \iftoggle{ebook}{ %
-        \EBookPageSetup %
-    }{ %
-        \iftoggle{printbook}{\CreateSpacePageSetup}{\LetterPageSetup} %
-    } %
+  \setstocksize{8in}{5.25in} %
+  \settrimmedsize{\stockheight}{\stockwidth}{*} %
+  \setlrmarginsandblock{1.7cm}{1.7cm}{*} % Left and right margin
+  \setulmarginsandblock{1.7cm}{2cm}{*} % Upper and lower margin
+  \setlength{\footskip}{1.65\baselineskip} %
+  \checkandfixthelayout %
 }
 
+\newcommand{\LetterPageSetup}[0]{%
+  \setstocksize{11in}{8.5in} %
+  \settrimmedsize{\stockheight}{\stockwidth}{*} %
+  \setlrmarginsandblock{1in}{1in}{*} % Left and right margin
+  \setulmarginsandblock{1in}{1in}{*} % Upper and lower margin
+  \setlength{\footskip}{1.65\baselineskip} %
+  \checkandfixthelayout %
+}
+
+\newcommand{\EBookPageSetup}[0]{ %
+  \relax %
+} 
+
+\newcommand{\TMTSetupPage}[0]{ %
+  \iftoggle{ebook}{ %
+    \EBookPageSetup %
+  }{ %
+    \iftoggle{printbook}{ %
+      \CreateSpacePageSetup %
+    }{ %
+      \LetterPageSetup%
+    } %
+  } %
+}
+
+%%%%%%%%%%%%%%%%%%%%
 % Enable the "draft" watermark for beta reader copies.
+%%%%%%%%%%%%%%%%%%%%
+
 \newcommand{\SetupDraftWatermark}[0]{%
     \iftoggle{betareader}{%
         \RequirePackage{draftwatermark}
         \SetWatermarkLightness{0.91}
     }{}
 }
+
+%%%%%%%%%%%%%%%%%%%%
+% The \tmtAtEndPreamble hook is called by \AtEndPreamble (from
+% etoolbox). It sets up the page size, draft watermark, and author
+% indexes. 
+%
+% You can override if desired.
+%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\tmtAtEndPreamble}[0]{%
+     \TMTSetupPage
+     \SetupDraftWatermark
+     \SetupAuthorIndexes
+}
+
+%%%%%%%%%%%%%%%%%%%%
+% The \tmtAtEndDocument hook is called by \AtEndDocument. It outputs
+% the author indexes if the authorcopy toggle is set. 
+%
+% You can override if desired.
+%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\tmtAtEndDocument}[0]{%
+    \OutputAuthorIndexes
+}
+
+%%%%%%%%%%%%%%%%%%%%
+% Shortcuts for sectioning.
+%%%%%%%%%%%%%%%%%%%%
+
+% So w ecan access \@ifstar and define our own commands with @s in the
+% name. 
+\makeatletter
+
+% Define normal and starred versions of our labeled sectioning
+% shortcuts.
+\newcommand{\@lchapter@norm}[2]{\chapter{#1} \label{ch:#2}}
+\newcommand{\@lsection@norm}[2]{\section{#1} \label{sec:#2}}
+\newcommand{\@lsubsection@norm}[2]{\subsection{#1} \label{ssec:#2}}
+\newcommand{\@lchapter@star}[2]{\chapter*{#1} \label{ch:#2}}
+\newcommand{\@lsection@star}[2]{\section*{#1} \label{sec:#2}}
+\newcommand{\@lsubsection@star}[2]{\subsection*{#1} \label{ssec:#2}}
+
+% Some mahic incantation to call the correct versions depending on
+% whether the macro is invoked with a * or not.
+\newcommand{\lchapter}[2]{ %
+  \@ifstar{ %
+    \@lchapter@star{#1}{#2} %
+  }{ %
+    \@lchapter@norm{#1}{#2} %
+  } %
+}
+
+\newcommand{\lsection}[2]{ %
+  \@ifstar{ %
+    \@lsection@star{#1}{#2} %
+  }{ %
+    \@lsection@norm{#1}{#2} %
+  } %
+}
+
+\newcommand{\lsubsection}[2]{ %
+  \@ifstar{ %
+    \@lsubsection@star{#1}{#2} %
+  }{ %
+    \@lsubsection@norm{#1}{#2} %
+  } %
+}
+
+% And return the interpretation of @ characters to normal.
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%
+% Set up our Memoir page style - we use the "ell" chapter style but
+% redefine it to ignore chapter titles.
+%%%%%%%%%%%%%%%%%%%%
+
+\makechapterstyle{tammymakesthings}{%
+    \RequirePackage{graphicx}
+    \chapterstyle{default}
+    \renewcommand*{\chapnumfont}{\normalfont\HUGE\sffamily}
+    \renewcommand*{\chaptitlefont}{\normalfont\huge\sffamily}
+    \settowidth{\chapindent}{\chapnumfont 111}
+    \renewcommand*{\printchaptername}{}
+    \renewcommand*{\chapternamenum}{}
+    \renewcommand*{\printchapternum}{%
+      \chs@ell@helper{\thechapter}%    
+      \renewcommand{\printchaptertitle}[1]{\relax}     % Ignore chapter titles
+    }
+}
+
+%%%%%%%%%%%%%%%%%%%%
+% Define our document hooks
+%%%%%%%%%%%%%%%%%%%%
 
 % The \tmtAtEndPreamble hook is called by \AtEndPreamble (from etoolbox). It sets up
 % the page size, draft watermark, and author indexes. You can override if desired.
@@ -169,37 +353,15 @@
     \OutputAuthorIndexes
 }
 
-% Shortcuts for sectioning.
-\makeatletter
-\newcommand{\@lchapter@normal}[2]{\chapter{#1} \label{ch:#2}}
-\newcommand{\@lsection@normal}[2]{\section{#1} \label{sec:#2}}
-\newcommand{\@lsubsection@normal}[2]{\subsection{#1} \label{ssec:#2}}
-\newcommand{\@lchapter@star}[2]{\chapter*{#1} \label{ch:#2}}
-\newcommand{\@lsection@star}[2]{\section*{#1} \label{sec:#2}}
-\newcommand{\@lsubsection@star}[2]{\subsection*{#1} \label{ssec:#2}}
-
-\newcommand{\lchapter}[2]{\@ifstar{\@lchapter@star{#1}{#2}}{\@lchapter@normal{#1}{#2}}}
-\newcommand{\lsection}[2]{\@ifstar{\@lsection@star{#1}{#2}}{\@lsection@normal{#1}{#2}}}
-\newcommand{\lsubsection}[2]{\@ifstar{\@lsubsection@star{#1}{#2}}{\@lsubsection@normal{#1}{#2}}}
-\makeatother
-
-% Set up our Memoir page style - we use the "ell" chapter style but
-% redefine it to ignore chapter titles.
-\makechapterstyle{tammymakesthings}{%
-    \RequirePackage{graphicx}
-    \chapterstyle{default}
-    \renewcommand*{\chapnumfont}{\normalfont\HUGE\sffamily}
-    \renewcommand*{\chaptitlefont}{\normalfont\huge\sffamily}
-    \settowidth{\chapindent}{\chapnumfont 111}
-    \renewcommand*{\printchaptername}{}
-    \renewcommand*{\chapternamenum}{}
-    \renewcommand*{\printchapternum}{%
-    \chs@ell@helper{\thechapter}%    
-    \renewcommand{\printchaptertitle}[1]{\relax}     % Ignore chapter titles
-}
-
-% Call the \tmtAtEndPreamble hook at the end of the preamble.
+% Register our \tmtAtEndPreamble hook to be called at the end of the
+% preamble.
 \AtEndPreamble{\tmtAtEndPreamble}
 
-% Call the \tmtAtEndDocument hook at the end of the document.
+% Register our \tmtAtEndDocument book to be called at the end of the
+% documwnt.
 \AtEndDocument{\tmtAtEndDocument}
+
+%%%%%%%%%%%%%%%%%%%%
+% And that's it!
+%%%%%%%%%%%%%%%%%%%%
+
