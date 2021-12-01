@@ -207,9 +207,9 @@
 % Conditional Include Commands
 %%%%%%%%%%%%%%%%%%%%
 
-\providecommand{\tmtCoverPage}{\InputIfFileExists{front-matter/coverpage}}
-\providecommand{\tmtCopyrightPage}{\InputIfFileExists{front-matter/copyright}}
-\providecommand{\tmtDedicationPage}{\InputIfFileExists{front-matter/dedication}}
+\providecommand{\tmtCoverPage}{\thispagestyle{empty} \InputIfFileExists{front-matter/coverpage}}
+\providecommand{\tmtCopyrightPage}{\thispagestyle{empty} \InputIfFileExists{front-matter/copyright}}
+\providecommand{\tmtDedicationPage}{\thispagestyle{empty} \InputIfFileExists{front-matter/dedication}}
 \providecommand{\tmtAcknowledgementsPage}{\InputIfFileExists{front-matter/acknowledgements}}
 \providecommand{\tmtAuthorBioPage}{\InputIfFileExists{end-matter/author}}
 
