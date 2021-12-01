@@ -42,7 +42,6 @@
 
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{memoir}}
 \ProcessOptions\relax
-\RequirePackageWithOptions{memoir}              % Make sure the memoir class is loaded
 
 % Set the conditional toggles from the job name. If you don't use
 % this, you'll need to set them manually.
@@ -61,7 +60,7 @@
 
 \newcommand{\SetOneToggleFromJobName}[1]{ %
   \if\thisjob{#1}\toggletrue{#1}\else\togglefalse{#1}\fi %
-} 
+}
 \newcommand{\SetTogglesFromJobName}[0]{%
   \SetOneToggleFromJobName{ebook} %
   \SetOneToggleFromJobName{printbook} %
@@ -108,7 +107,7 @@
 }
 
 %%%%%%%%%%%%%%%%%%%%
-% Output the author indexes if the authorcopy toggle is set. 
+% Output the author indexes if the authorcopy toggle is set.
 % Automatically called by the \tmtAtEndDocument hook (unless you
 % override it).
 %%%%%%%%%%%%%%%%%%%%
@@ -170,7 +169,7 @@
     \par
   }{}
 }
- 
+
 \newcommand{\ResearchComment}[1]{%
   \iftoggle{authorcopy}{%
     \par
@@ -205,6 +204,51 @@
 }
 
 %%%%%%%%%%%%%%%%%%%%
+% Conditional Include Commands
+%%%%%%%%%%%%%%%%%%%%
+
+\providecommand{\tmtCoverPage}{\InputIfFileExists{front-matter/coverpage}}
+\providecommand{\tmtCopyrightPage}{\InputIfFileExists{front-matter/copyright}}
+\providecommand{\tmtDedicationPage}{\InputIfFileExists{front-matter/dedication}}
+\providecommand{\tmtAcknowledgementsPage}{\InputIfFileExists{front-matter/acknowledgements}}
+\providecommand{\tmtAuthorBioPage}{\InputIfFileExists{end-matter/author-bio}}
+
+\newcommand{\TMTIncludeCoverpage}[0]{%
+    \tmtCoverPage{} \cleardoublepage
+}
+
+\newcommand{\TMTIncludeCopyrightPage}[0]{%
+    \iftoggle{authorcopy}{\relax}{\tmtCopyrightPage{} \cleardoublepage}
+}
+
+\newcommand{\TMTIncludeDedication}[0]{%
+    \iftoggle{printbook}{%
+        \tmtDedicationPage{}
+        \cleardoublepage
+    }
+    \iftoggle{ebook}{ %
+        \tmtDedicationPage{}
+        \cleardoublepage
+    }
+}
+
+\newcommand{\TMTIncludeAcknowledgements}[0]{%
+    \iftoggle{printbook}{%
+        \tmtAcknowledgementsPage{}
+        \cleardoublepage%
+    }
+    \iftoggle{ebook}{%
+        \tmtAcknowledgementsPage{}
+        \cleardoublepage%
+    }
+}
+
+\newcommand{\TMTIncludeAuthorBio}[0]{%
+    \iftoggle{printbook}{\tmtAuthorBioPage{}}
+    \iftoggle{ebook}{\tmtAuthorBioPage{}}
+}
+
+%%%%%%%%%%%%%%%%%%%%
 % Set up the page size and print block based on the document toggles.
 %%%%%%%%%%%%%%%%%%%%
 
@@ -228,7 +272,7 @@
 
 \newcommand{\EBookPageSetup}[0]{ %
   \relax %
-} 
+}
 
 \newcommand{\TMTSetupPage}[0]{ %
   \iftoggle{ebook}{ %
@@ -256,7 +300,7 @@
 %%%%%%%%%%%%%%%%%%%%
 % The \tmtAtEndPreamble hook is called by \AtEndPreamble (from
 % etoolbox). It sets up the page size, draft watermark, and author
-% indexes. 
+% indexes.
 %
 % You can override if desired.
 %%%%%%%%%%%%%%%%%%%%
@@ -269,7 +313,7 @@
 
 %%%%%%%%%%%%%%%%%%%%
 % The \tmtAtEndDocument hook is called by \AtEndDocument. It outputs
-% the author indexes if the authorcopy toggle is set. 
+% the author indexes if the authorcopy toggle is set.
 %
 % You can override if desired.
 %%%%%%%%%%%%%%%%%%%%
@@ -283,7 +327,7 @@
 %%%%%%%%%%%%%%%%%%%%
 
 % So w ecan access \@ifstar and define our own commands with @s in the
-% name. 
+% name.
 \makeatletter
 
 % Define normal and starred versions of our labeled sectioning
@@ -338,7 +382,7 @@
     \renewcommand*{\printchaptername}{}
     \renewcommand*{\chapternamenum}{}
     \renewcommand*{\printchapternum}{%
-      \chs@ell@helper{\thechapter}%    
+      \chs@ell@helper{\thechapter}%
       \renewcommand{\printchaptertitle}[1]{\relax}     % Ignore chapter titles
     }
 }
@@ -349,16 +393,16 @@
 
 % The \tmtAtEndPreamble hook is called by \AtEndPreamble (from etoolbox). It sets up
 % the page size, draft watermark, and author indexes. You can override if desired.
-\newcommand{\tmtAtEndPreamble}[0]{%
-     \TMTSetupPage
-     \SetupDraftWatermark
-     \SetupAuthorIndexes
+\renewcommand{\tmtAtEndPreamble}[0]{%
+     \TMTSetupPage %
+     \SetupDraftWatermark %
+     \SetupAuthorIndexes %
 }
 
 % The \tmtAtEndDocument hook is called by \AtEndDocument. It outputs the author
 % indexes if the authorcopy toggle is set. You can override if desired.
-\newcommand{\tmtAtEndDocument}[0]{%
-    \OutputAuthorIndexes
+\renewcommand{\tmtAtEndDocument}[0]{%
+    \OutputAuthorIndexes %
 }
 
 % Register our \tmtAtEndPreamble hook to be called at the end of the
