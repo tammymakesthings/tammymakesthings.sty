@@ -207,45 +207,30 @@
 % Conditional Include Commands
 %%%%%%%%%%%%%%%%%%%%
 
-\providecommand{\tmtCoverPage}{\thispagestyle{empty} \InputIfFileExists{front-matter/coverpage}}
-\providecommand{\tmtCopyrightPage}{\thispagestyle{empty} \InputIfFileExists{front-matter/copyright}}
-\providecommand{\tmtDedicationPage}{\thispagestyle{empty} \InputIfFileExists{front-matter/dedication}}
+\providecommand{\tmtCoverPage}{\InputIfFileExists{front-matter/coverpage}}
+\providecommand{\tmtCopyrightPage}{\InputIfFileExists{front-matter/copyright}}
+\providecommand{\tmtDedicationPage}{\InputIfFileExists{front-matter/dedication}}
 \providecommand{\tmtAcknowledgementsPage}{\InputIfFileExists{front-matter/acknowledgements}}
 \providecommand{\tmtAuthorBioPage}{\InputIfFileExists{end-matter/author}}
 
 \newcommand{\TMTIncludeCoverpage}[0]{%
-    \tmtCoverPage{} \cleardoublepage
+    \thispagestyle{empty} \tmtCoverPage{} \cleardoublepage
 }
 
 \newcommand{\TMTIncludeCopyrightPage}[0]{%
-    \iftoggle{authorcopy}{\relax}{\tmtCopyrightPage{} \cleardoublepage}
+    \iftoggle{authorcopy}{\relax}{\thispagestyle{empty} \tmtCopyrightPage{} \cleardoublepage}
 }
 
 \newcommand{\TMTIncludeDedication}[0]{%
-    \iftoggle{printbook}{%
-        \tmtDedicationPage{}
-        \cleardoublepage
-    }
-    \iftoggle{ebook}{ %
-        \tmtDedicationPage{}
-        \cleardoublepage
-    }
+    \iftoggle{betareader}{\relax}{\thispagestyle{empty} \tmtDedicationPage{} \cleardoublepage}
 }
 
 \newcommand{\TMTIncludeAcknowledgements}[0]{%
-    \iftoggle{printbook}{%
-        \tmtAcknowledgementsPage{}
-        \cleardoublepage%
-    }
-    \iftoggle{ebook}{%
-        \tmtAcknowledgementsPage{}
-        \cleardoublepage%
-    }
+    \iftoggle{betareader}{\relax}{\tmtAcknowledgementsPage{} \cleardoublepage}
 }
 
 \newcommand{\TMTIncludeAuthorBio}[0]{%
-    \iftoggle{printbook}{\tmtAuthorBioPage{}}
-    \iftoggle{ebook}{\tmtAuthorBioPage{}}
+    \iftoggle{betareader}{\relax}{\tmtAuthorBio{} \cleardoublepage}
 }
 
 %%%%%%%%%%%%%%%%%%%%
